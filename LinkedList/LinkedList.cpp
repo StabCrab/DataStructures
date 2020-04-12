@@ -1,342 +1,461 @@
-#include "LinkedList.h"
-LinkedList::Node::Node(const ValueType &value, LinkedList::Node *next, LinkedList::Node *previous)
-{
-    this->next = next;
-    this->previous = previous;
-    this->value = value;
-}
+#include <cstring>
+#include "MyVector.h"
+#include "iostream"
 
-LinkedList::Node::~Node()
+MyVector::MyVector(size_t size, ResizeStrategy resizeStrategy, float coef)
 {
-
-}
-
-void LinkedList::Node::insertNext(const ValueType &value)
-{
-    Node* newNode = new Node(value, this->next);
-    this->next = newNode;
-    newNode->previous = this;
-}
-void LinkedList::Node::removeNext()
-{
-    Node* removeNode = this->next;
-    Node* newNext = removeNode->next;
-    delete removeNode;
-    this->next = newNext;
-}
-
-LinkedList::LinkedList()
-{
-    _size = 0;
-    _firstNode = nullptr;
-    _lastNode = nullptr;
-}
-
-LinkedList::LinkedList(const LinkedList &copyList)
-{
-    this->_size = copyList._size;
-    if (this->_size == 0)
+    if (size == 0)
     {
-        this->_lastNode = nullptr;
-        this->_firstNode = nullptr;
-        return;
-    }
-
-    this->_lastNode = new Node(copyList._lastNode->value);
-    this->_firstNode= new Node (copyList._firstNode->value);
-    Node* currentNode = this->_firstNode;
-    Node* currentCopyNode = copyList._firstNode;
-
-
-    while (currentCopyNode->next) {
-        currentNode->next = new Node(currentCopyNode->value);
-        currentCopyNode = currentCopyNode->next;
-        currentNode = currentNode->next;
-    }
-}
-LinkedList& LinkedList::operator=(const LinkedList& copyList)
-{
-    if (this == &copyList) {
-        return *this;
-    }
-    LinkedList bufList(copyList);
-    this->_size = bufList._size;
-    this->_lastNode = bufList._lastNode;
-    this->_firstNode = bufList._firstNode;
-    return *this;
-}
-LinkedList::LinkedList(LinkedList&& moveList) noexcept
-{
-    this->_size = moveList._size;
-    this->_lastNode= moveList._lastNode;
-    this->_firstNode = moveList._firstNode;
-
-    moveList._size = 0;
-    moveList._firstNode = nullptr;
-    moveList._lastNode = nullptr;
-}
-LinkedList& LinkedList::operator=(LinkedList&& moveList) noexcept
-{
-    if (this == &moveList) {
-        return *this;
-    }
-//    forceNodeDelete(_lastNode);
-    this->_size = moveList._size;
-    this->_lastNode = moveList._lastNode;
-    this->_firstNode = moveList._firstNode;
-
-    moveList._size = 0;
-    moveList._lastNode= nullptr;
-    moveList._firstNode = nullptr;
-
-    return *this;
-}
-LinkedList::~LinkedList()
-{
-    //forceNodeDelete(_firstNode);
-}
-
-ValueType& LinkedList::operator[](const size_t pos) const
-{
-    return getNode(pos)->value;
-}
-LinkedList::Node* LinkedList::getNode(const size_t pos) const
-{
-    if (pos < 0) {
-        assert(pos < 0);
-    }
-    else if (pos >= this->_size) {
-        assert(pos >= this->_size);
-    }
-
-    Node* bufNode = this->_firstNode;
-    for (int i = 0; i < pos; ++i) {
-        bufNode = bufNode->next;
-    }
-
-    return bufNode;
-}
-void LinkedList::insert(const size_t pos, const ValueType& value)
-{
-    if (pos < 0) {
-        assert(pos < 0);
-    }
-    else if (pos > this->_size) {
-        assert(pos > this->_size);
-    }
-
-    if (pos == 0)
-    {
-        pushFront(value);
+        this->_size = size;
+        this->_capacity = 1;
+        this->_data = new ValueType[size];
+        this->strategy = resizeStrategy;
     }
     else
+    {
+        if (resizeStrategy == ResizeStrategy::Additive)
         {
-        Node* bufNode = this->_firstNode;
-        for (size_t i = 0; i < pos-1; ++i) {
-            bufNode = bufNode->next;
+            this->_size = size;
+            this->_capacity = round(coef);
+            this->_data = new ValueType[size];
+            this->strategy = ResizeStrategy::Additive;
+            for (int i = 0; i < size; i++)
+            {
+                this->_data[i] = 0.0;
+            }
         }
-        bufNode->insertNext(value);
-        ++_size;
+        else
+        {
+            this->_size = size;
+            this->_capacity = round(size * coef);
+            this->_data = new ValueType();
+            this->strategy = ResizeStrategy :: Multiplicative;
+            for (int i = 0; i < size; i++)
+            {
+                this->_data[i] = 0.0;
+            }
+        }
     }
 }
-void LinkedList::insertAfterNode(Node* node, const ValueType& value)
+
+MyVector::MyVector(size_t size, ValueType value, ResizeStrategy resizeStrategy, float coef)
 {
-    node->insertNext(value);
+    if (size == 0)
+    {
+        this->_size = size;
+        this->_capacity = 1;
+        this->_data = new ValueType[size];
+        this->strategy = resizeStrategy;
+    }
+    else
+    {
+        if (resizeStrategy == ResizeStrategy::Additive)
+        {
+            this->_size = size;
+            this->_capacity = size;
+            this->_data = new ValueType[size];
+            this->strategy = ResizeStrategy::Additive;
+            for (int i = 0; i < size; i++)
+            {
+                this->_data[i] = value;
+            }
+        }
+        else
+        {
+            this->_size = size;
+            this->_capacity = size * coef;
+            this->_data = new ValueType();
+            this->strategy = ResizeStrategy::Multiplicative;
+            for (int i = 0; i < size; i++)
+            {
+                this->_data[i] = value;
+            }
+        }
+    }
 }
-void LinkedList::pushBack(const ValueType& value)
+
+MyVector::MyVector(const MyVector &copy)
 {
+    ValueType* newData = new ValueType(copy._size);
+    for (int i = 0; i < copy._size; i++)
+    {
+        newData[i] = copy._data[i];
+        //std:: cout << _data[i] <<std::endl;
+    }
+    this->_data = newData;
+    this->strategy = copy.strategy;
+    this->_capacity = copy._capacity;
+    this->_size = copy._size;
+}
+
+MyVector &MyVector::operator = (MyVector &copy){
+    ValueType* newData = new ValueType(copy._size);
+    for (int i = 0; i < copy._size; i++)
+    {
+        newData[i] = copy._data[i];
+        //std:: cout << _data[i] <<std::endl;
+    }
+    this->_data = newData;
+    this->strategy = copy.strategy;
+    this->_capacity = copy._capacity;
+    this->_size = copy._size;
+}
+
+MyVector::~MyVector()
+{
+    delete[] _data;
+}
+
+size_t MyVector::capacity() const {
+    return _capacity;
+}
+
+size_t MyVector::size() const {
+    return _size;
+}
+
+float MyVector::loadFactor() {
+    return this->_size / this->_capacity;
+}
+
+ValueType &MyVector::operator[](const size_t i) const
+{
+    return this->_data[i];
+}
+
+void MyVector::pushBack(const ValueType &value)
+{
+    if(this->_capacity < this->_size + 1)
+    {
+        reserve(this->_capacity + 1);
+    }
+    this->_data[_size] = value;
     this->_size++;
-    if (this->_size == 1)
-    {
-        _firstNode = new Node(value, _firstNode, nullptr);
-        _lastNode = _firstNode;
-
-    }
-    else
-    {
-        _lastNode->insertNext(value);
-        Node *newLastNode = _lastNode->next;
-        newLastNode->previous = _lastNode;
-        _lastNode = newLastNode;
-    }
 }
-void LinkedList::pushFront(const ValueType& value)
-{
-    _firstNode = new Node(value, _firstNode, nullptr);
-    ++_size;
-}
-void LinkedList::remove(const size_t pos)// Посмотреть
-{
-    if (pos < 0)
-    {
-        assert(pos < 0);
-    }
-    else if (pos > this->_size)
-    {
-        assert(pos > this->_size);
-    }
-    if (pos == 0)
-    {
-        this->removeFront();
-    }
-    else if (pos == this->size() - 1)
-    {
-        this->removeBack();
-    }
-    else
-    {
-        Node* currentNode = _firstNode;
 
-        for (int i = 0; i < pos - 1; i++)
+void MyVector::insert(const size_t i, const ValueType &value)
+{
+    if (loadFactor() < 1)
+    {
+        ValueType* newData = new ValueType(this->_capacity);
+        for (int j = 0; j < i; j++)
         {
-            currentNode = currentNode->next;
+            newData[j] = this->_data[j];
         }
-
-        Node* erasedNode = currentNode->next;
-        currentNode->next = erasedNode->next;
-        delete erasedNode;
-        this->_size--;
+        newData[i] = value;
+        for(int j = i + 1; j < this->_size + 1; j++)
+        {
+            newData[j] = this->_data[j - 1];
+        }
+        this->_data = newData;
+        this->_size++;
     }
-
+    else
+    {
+        ValueType* newData = new ValueType(this->_capacity + 1);
+        for (int j = 0; j < i; j++)
+        {
+            newData[j] = this->_data[j];
+        }
+        newData[i] = value;
+        for(int j = i + 1; j < this->_size + 1; j++)
+        {
+            newData[j] = this->_data[j - 1];
+        }
+        this->_data = newData;
+        this->_size++;
+    }
 }
 
-size_t LinkedList::size() const
+void MyVector::insert(const size_t i, const MyVector &value)
 {
-    return this->_size;
+    if(this->_capacity - value._size >= 0)
+    {
+        ValueType* newData = new ValueType(this->_capacity);
+        for (int j = 0; j < i; j++)
+        {
+            newData[j] = this->_data[j];
+        }
+        for (int j = i; j < i + value._size; j++)
+        {
+            newData[j] = value[j - i];
+        }
+        for (int j = i + value._size; j < this->_size + value._size; j++)
+        {
+            newData[j] = this->_data[j - value._size];
+        }
+        this->_data = newData;
+    }
+    else
+    {
+        ValueType* newData = new ValueType(this->_size + value._size);
+        for (int j = 0; j < i; j++)
+        {
+            newData[j] = this->_data[j];
+        }
+        for (int j = i; j < i + value._size; j++)
+        {
+            newData[j] = value[j - i];
+        }
+        for (int j = i + value._size; j < this->_size + value._size; j++)
+        {
+            newData[j] = this->_data[j - value._size];
+        }
+        this->_data = newData;
+    }
 }
 
-void LinkedList::removeNextNode(LinkedList::Node *node)
+void MyVector::popBack()
 {
-
+    this->_size--;
+    ValueType* newData = new ValueType();
+    for(int i = 0; i < this->_size; i++)
+    {
+        newData[i] = this->_data[i];
+    }
+    this->_data = newData;
 }
 
-void LinkedList::removeFront()
+void MyVector::erase(const size_t i)
 {
-    this->_firstNode = this->_firstNode->next;
-    delete _firstNode->previous;
-    this->_firstNode->previous = nullptr;
+    ValueType* newData = new ValueType(this->_capacity);
+    for (int j = 0; j < i; j++)
+    {
+        newData[j] = this->_data[j];
+    }
+    for (int j = i + 1; j < this->_size - 1; j++)
+    {
+        newData[j - 1] = this->_data[j];
+    }
+    this->_data = newData;
     this->_size--;
 }
 
-void LinkedList::removeBack()
+void MyVector::erase(const size_t i, const size_t len)
 {
-    this->_lastNode = this->_lastNode->previous;
-    delete _lastNode->next;
-    this->_lastNode->next = nullptr;
-    this->_size--;
+    ValueType* newData = new ValueType(this->_capacity);
+    for (int j = 0; j < i; j++)
+    {
+        newData[j] = this->_data[j];
+    }
+    for (int j = i + len; j < this->_size - len; j++)
+    {
+        newData[j - len] = this->_data[j];
+    }
+    this->_data = newData;
+    this->_size-= len;
 }
 
-long long int LinkedList::findIndex(const ValueType &value) const {
-    long long int i = 0;
-    Node *currentNode = _firstNode;
-    while (i < _size)
-    {
-        if (currentNode->value == value)
-            return i;
-    }
-    std:: cout << "No Node" << std :: endl;
-    return -1;
-}
-LinkedList::Node* LinkedList::findNode(const ValueType& value) const
+long long int MyVector::find(const ValueType &value, bool isBegin) const
 {
-    long long int i = 0;
-    Node *currentNode = _firstNode;
-    while (i < _size)
+    if (isBegin)
     {
-        if (currentNode->value == value)
-            return currentNode;
+        for (int i = 0; i < this->_size; i++)
+        {
+            if (this->_data[i] == value)
+                return _data[i];
+        }
+        return -1;
     }
-    std:: cout << "No Node" << std :: endl;
-    return nullptr;
-}
-void LinkedList::reverse()
-{
-    Node *nextNode;
-    Node *currentNode;
-    Node *previousNode;
-    previousNode = _firstNode;
-    currentNode = _firstNode->next;
-    nextNode = currentNode->next;
-    _firstNode->next = nullptr;
-    currentNode->next = previousNode;
-    _lastNode = _firstNode;
-    while (nextNode->next != nullptr)
+    else
     {
-        previousNode = currentNode;
-        currentNode = nextNode;
-        nextNode = nextNode->next;
-        currentNode->next = previousNode;
+        for (int i = this->_size - 1; i > -1; i--)
+        {
+            if (this->_data[i] == value)
+                return _data[i];
+        }
+        return -1;
     }
-    previousNode = currentNode;
-    currentNode = nextNode;
-    nextNode = nextNode->next;
-    currentNode->next = previousNode;
-    _firstNode = currentNode;
 }
 
-LinkedList LinkedList::reverse() const
+
+void MyVector::reserve(const size_t capacity)
 {
-    LinkedList reversedList = *this;
-    Node *nextNode;
-    Node *currentNode;
-    Node *previousNode;
-    previousNode =reversedList. _firstNode;
-    currentNode = reversedList._firstNode->next;
-    nextNode = currentNode->next;
-    reversedList._firstNode->next = nullptr;
-    currentNode->next = previousNode;
-    reversedList._lastNode = reversedList._firstNode;
-    while (nextNode->next != nullptr)
+    if (capacity < this->_size)
+        this->_size = this->_capacity;
+    else
+        this->_capacity = capacity;
+    ValueType* newValue = new ValueType[capacity];
+    for (int i = 0; i < this->_size; i++)
     {
-        previousNode = currentNode;
-        currentNode = nextNode;
-        nextNode = nextNode->next;
-        currentNode->next = previousNode;
+        newValue[i] = this->_data[i];
     }
-    previousNode = currentNode;
-    currentNode = nextNode;
-    nextNode = nextNode->next;
-    currentNode->next = previousNode;
-    reversedList._firstNode = currentNode;
-    return reversedList;
+    delete[] this->_data;
+    this->_data = newValue;
 }
 
-LinkedList LinkedList::getReverseList() const
+void MyVector::resize(const size_t size, const ValueType value)
 {
-    LinkedList reversedList = *this;
-    Node *nextNode;
-    Node *currentNode;
-    Node *previousNode;
-    previousNode =reversedList. _firstNode;
-    currentNode = reversedList._firstNode->next;
-    nextNode = currentNode->next;
-    reversedList._firstNode->next = nullptr;
-    currentNode->next = previousNode;
-    reversedList._lastNode = reversedList._firstNode;
-    while (nextNode->next != nullptr)
+    if (this->_size == size)
+        exit;
+    if (this->_size < size)
     {
-        previousNode = currentNode;
-        currentNode = nextNode;
-        nextNode = nextNode->next;
-        currentNode->next = previousNode;
+        ValueType* newData = new ValueType(size);
+        for (int i = 0; i < this->_size; i++)
+        {
+            newData[i] = this->_data[i];
+        }
+        for (int i = this->_size; i < size; i++)
+        {
+            newData[i] = value;
+        }
+        this->_data = newData;
+        this->_size = size;
     }
-    previousNode = currentNode;
-    currentNode = nextNode;
-    nextNode = nextNode->next;
-    currentNode->next = previousNode;
-    reversedList._firstNode = currentNode;
-    return reversedList;
+    if (this->_size > size)
+    {
+        ValueType* newData = new ValueType(size);
+        for (int i = 0; i < size; i++)
+        {
+            newData[i] = this->_data[i];
+        }
+        this->_data = newData;
+        this->_size = size;
+        this->_capacity = size;
+    }
 }
 
-void LinkedList::forceNodeDelete(LinkedList::Node *node)
+void MyVector::clear()
+{
+    for (int i = 0; i < this->_size; i++)
+    {
+        this->_data[i] = 0.0;
+    }
+    this->_size = 0;
+}
+
+MyVector::Iterator::~Iterator()
 {
 
-    if (node == nullptr)
-    {
-        return;
-    }
+}
+bool MyVector::Iterator::operator==(const Iterator &i)
+{
+    return this->ptr == i.ptr;
+}
+bool MyVector::Iterator::operator!=(const Iterator &i)
+{
+    return this->ptr != i.ptr;
+}
+MyVector::Iterator & MyVector:: Iterator::operator++()
+{
+    this->ptr++;
+    return *this;
+}
+MyVector::Iterator & MyVector:: Iterator::operator--()
+{
+    this->ptr--;
+    return *this;
+}
 
-    Node* nextDeleteNode = node->next;
-    delete node;
-    forceNodeDelete(nextDeleteNode);
+MyVector::Iterator::Iterator(ValueType *ptr)
+{
+    this->ptr = ptr;
+}
+
+
+MyVector::Iterator MyVector::begin()
+{
+    return Iterator(&this->_data[0]);
+}
+
+MyVector::Iterator MyVector::end()
+{
+    return Iterator(&this->_data[this->_size - 1]);
+}
+
+ValueType MyVector::getValue(Iterator i)
+{
+    return *i.ptr;
+}
+
+void MyVector::setValue(MyVector::Iterator i, ValueType value)
+{
+    *i.ptr = value;
+}
+
+void MyVector::sortedSquares( SortedStrategy strategy) {
+    ValueType* vec  = new ValueType[this->_size];
+    if (strategy == SortedStrategy::Descending)
+    {
+        int i = 0;
+        int j = this->size() - 1;
+        int k = 0;
+        while(this->_data[i] < 0 && this->_data[j] >= 0)
+        {
+            if (abs(this->_data[i]) >= abs(this->_data[j]))
+            {
+                vec[k] = this->_data[i] * this->_data[i];
+                //std:: cout << vector._data[k] << std::endl;
+                i++;
+                k++;
+            }
+            else
+            {
+                vec[k] = this->_data[j] * this->_data[j];
+                //std:: cout << vector._data[k] << std:: endl;
+                j--;
+                k++;
+            }
+        }
+        while(this->_data[i] < 0)
+        {
+            vec[k] = this->_data[i] * this->_data[i];
+            i++;
+            k++;
+        }
+        while(this->_data[j] >= 0)
+        {
+            vec[k] = this->_data[j] * this->_data[j];
+            j--;
+            k++;
+        }
+    }
+    else
+    {
+
+        int i = 0;
+        int j = this->size() - 1;
+        int k = this->size() - 1;
+        while(this->_data[i] < 0 && this->_data[j] >= 0)
+        {
+            if (abs(this->_data[i]) >= abs(this->_data[j]))
+            {
+                vec[k] = this->_data[i] * this->_data[i];
+                //std:: cout << vector._data[k] << std::endl;
+                i++;
+                k--;
+            }
+            else
+            {
+                vec[k] = this->_data[j] * this->_data[j];
+                //std:: cout << vector._data[k] << std:: endl;
+                j--;
+                k--;
+            }
+        }
+        while(this->_data[i] < 0)
+        {
+            vec[k] = this->_data[i] * this->_data[i];
+            i++;
+            k--;
+        }
+        while(this->_data[j] >= 0)
+        {
+            vec[k] = this->_data[j] * this->_data[j];
+            j--;
+            k--;
+        }
+    }
+    delete[] this->_data;
+    this->_data = vec;
+}
+
+MyVector::MyVector(MyVector &&moveVec) noexcept
+{
+    _data = moveVec._data;
+    _size = moveVec._size;
+    _capacity = moveVec._capacity;
+    moveVec._data = nullptr;
+    moveVec._capacity = 0;
+    moveVec._size = 0;
 }
