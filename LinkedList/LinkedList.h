@@ -1,5 +1,8 @@
 #pragma once
 
+#include <cstdlib>
+#include <iostream>
+#include <cassert>
 // потом поменяем на шаблоны
 using ValueType = double;
 
@@ -11,7 +14,7 @@ class LinkedList
 	// поле с ключем в узел и, с учетом этого, поменять методы LinkedList 
 	// (доступ по ключу, поиск по ключу и т.д.)
 	struct Node {
-		Node(const ValueType& value, Node* next = nullptr);
+		Node(const ValueType& value, Node* next = nullptr, Node* previous = nullptr);
 		~Node();
 
 		void insertNext(const ValueType& value);
@@ -19,6 +22,7 @@ class LinkedList
 
 		ValueType value;
 		Node* next;
+		Node* previous;
 	};
 
 public:
@@ -64,9 +68,9 @@ public:
 
 	size_t size() const;
 private:
-	Node*	_head;
+	Node*	_lastNode;
 	size_t	_size;
+	Node* _firstNode;
 
 	void forceNodeDelete(Node* node);
 };
-
