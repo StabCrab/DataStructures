@@ -72,6 +72,8 @@ public:
 	void clear();
 	Iterator begin();
 	Iterator end();
+	const Iterator cbegin();
+	const Iterator cend();
 	ValueType getValue(Iterator i);
 	void setValue(Iterator i, ValueType value);
     void sortedSquares(SortedStrategy strategy);
@@ -90,6 +92,8 @@ public:
     bool operator!=(const Iterator &i);
     Iterator &operator++();
     Iterator &operator--();
+    ValueType operator*();
+    ValueType *operator->();
 private:
     ValueType* ptr;
     friend class MyVector;
