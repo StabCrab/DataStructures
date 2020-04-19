@@ -8,7 +8,7 @@ MyVector::MyVector(size_t size, ResizeStrategy resizeStrategy, float coef)
     {
         this->_size = size;
         this->_capacity = 1;
-        this->_data = new ValueType[size];
+        this->_data = new ValueType[this->_capacity];
         this->strategy = resizeStrategy;
     }
     else
@@ -17,7 +17,7 @@ MyVector::MyVector(size_t size, ResizeStrategy resizeStrategy, float coef)
         {
             this->_size = size;
             this->_capacity = round(coef);
-            this->_data = new ValueType[size];
+            this->_data = new ValueType[this->_capacity];
             this->strategy = ResizeStrategy::Additive;
             for (int i = 0; i < size; i++)
             {
@@ -28,7 +28,7 @@ MyVector::MyVector(size_t size, ResizeStrategy resizeStrategy, float coef)
         {
             this->_size = size;
             this->_capacity = round(size * coef);
-            this->_data = new ValueType();
+            this->_data = new ValueType[this->_capacity];
             this->strategy = ResizeStrategy :: Multiplicative;
             for (int i = 0; i < size; i++)
             {
@@ -44,7 +44,7 @@ MyVector::MyVector(size_t size, ValueType value, ResizeStrategy resizeStrategy, 
     {
         this->_size = size;
         this->_capacity = 1;
-        this->_data = new ValueType[size];
+        this->_data = new ValueType[_capacity];
         this->strategy = resizeStrategy;
     }
     else
@@ -53,7 +53,7 @@ MyVector::MyVector(size_t size, ValueType value, ResizeStrategy resizeStrategy, 
         {
             this->_size = size;
             this->_capacity = size;
-            this->_data = new ValueType[size];
+            this->_data = new ValueType[_capacity];
             this->strategy = ResizeStrategy::Additive;
             for (int i = 0; i < size; i++)
             {
@@ -64,7 +64,7 @@ MyVector::MyVector(size_t size, ValueType value, ResizeStrategy resizeStrategy, 
         {
             this->_size = size;
             this->_capacity = size * coef;
-            this->_data = new ValueType();
+            this->_data = new ValueType[_capacity];
             this->strategy = ResizeStrategy::Multiplicative;
             for (int i = 0; i < size; i++)
             {
@@ -89,16 +89,19 @@ MyVector::MyVector(const MyVector &copy)
 }
 
 MyVector &MyVector::operator = (MyVector &copy){
-    ValueType* newData = new ValueType(copy._size);
+    if (this == &copy)
+        return *this;
+    ValueType* newData = new ValueType[copy._capacity];
     for (int i = 0; i < copy._size; i++)
     {
         newData[i] = copy._data[i];
-        //std:: cout << _data[i] <<std::endl;
     }
+    delete[] this->_data;
     this->_data = newData;
     this->strategy = copy.strategy;
     this->_capacity = copy._capacity;
     this->_size = copy._size;
+    return *this;
 }
 
 MyVector::~MyVector()
@@ -272,16 +275,19 @@ long long int MyVector::find(const ValueType &value, bool isBegin) const
 void MyVector::reserve(const size_t capacity)
 {
     if (capacity < this->_size)
-        this->_size = this->_capacity;
+    {
+        this->_size = capacity;
+        this->_capacity = capacity;
+    }
     else
         this->_capacity = capacity;
-    ValueType* newValue = new ValueType[capacity];
+    ValueType* newData = new ValueType[capacity];
     for (int i = 0; i < this->_size; i++)
     {
-        newValue[i] = this->_data[i];
+        newData[i] = this->_data[i];
     }
     delete[] this->_data;
-    this->_data = newValue;
+    this->_data = newData;
 }
 
 void MyVector::resize(const size_t size, const ValueType value)
@@ -352,12 +358,27 @@ MyVector::Iterator::Iterator(ValueType *ptr)
     this->ptr = ptr;
 }
 
+ValueType MyVector::Iterator::operator*() {
+    return *this->ptr;
+}
+
+ValueType *MyVector::Iterator::operator->() {
+    return this->ptr;
+}
+
 
 MyVector::Iterator MyVector::begin()
 {
     return Iterator(&this->_data[0]);
 }
 
+const MyVector::Iterator MyVector::cbegin() {
+    return Iterator(&this->_data[0]);
+}
+const MyVector::Iterator MyVector::cend()
+{
+    return Iterator(&this->_data[_size - 1]);
+}
 MyVector::Iterator MyVector::end()
 {
     return Iterator(&this->_data[this->_size - 1]);
