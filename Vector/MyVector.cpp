@@ -9,16 +9,18 @@ MyVector::MyVector(size_t size, ResizeStrategy resizeStrategy, float coef)
         this->_size = size;
         this->_capacity = 1;
         this->_data = new ValueType[this->_capacity];
-        this->strategy = resizeStrategy;
+        this->_strategy = resizeStrategy;
+        this->_coef = coef;
     }
     else
     {
         if (resizeStrategy == ResizeStrategy::Additive)
         {
             this->_size = size;
-            this->_capacity = round(coef);
+            this->_capacity = size + round(coef);
             this->_data = new ValueType[this->_capacity];
-            this->strategy = ResizeStrategy::Additive;
+            this->_strategy = ResizeStrategy::Additive;
+            this->_coef = coef;
             for (int i = 0; i < size; i++)
             {
                 this->_data[i] = 0.0;
@@ -29,7 +31,8 @@ MyVector::MyVector(size_t size, ResizeStrategy resizeStrategy, float coef)
             this->_size = size;
             this->_capacity = round(size * coef);
             this->_data = new ValueType[this->_capacity];
-            this->strategy = ResizeStrategy :: Multiplicative;
+            this->_strategy = ResizeStrategy :: Multiplicative;
+            this->_coef = coef;
             for (int i = 0; i < size; i++)
             {
                 this->_data[i] = 0.0;
@@ -45,16 +48,18 @@ MyVector::MyVector(size_t size, ValueType value, ResizeStrategy resizeStrategy, 
         this->_size = size;
         this->_capacity = 1;
         this->_data = new ValueType[_capacity];
-        this->strategy = resizeStrategy;
+        this->_strategy = resizeStrategy;
+        this->_coef = coef;
     }
     else
     {
         if (resizeStrategy == ResizeStrategy::Additive)
         {
             this->_size = size;
-            this->_capacity = size;
+            this->_capacity = size + round(coef);
             this->_data = new ValueType[_capacity];
-            this->strategy = ResizeStrategy::Additive;
+            this->_strategy = ResizeStrategy::Additive;
+            this->_coef = coef;
             for (int i = 0; i < size; i++)
             {
                 this->_data[i] = value;
@@ -63,9 +68,10 @@ MyVector::MyVector(size_t size, ValueType value, ResizeStrategy resizeStrategy, 
         else
         {
             this->_size = size;
-            this->_capacity = size * coef;
+            this->_capacity = round(size * coef);
             this->_data = new ValueType[_capacity];
-            this->strategy = ResizeStrategy::Multiplicative;
+            this->_strategy = ResizeStrategy::Multiplicative;
+            this->_coef = coef;
             for (int i = 0; i < size; i++)
             {
                 this->_data[i] = value;
@@ -80,10 +86,9 @@ MyVector::MyVector(const MyVector &copy)
     for (int i = 0; i < copy._size; i++)
     {
         newData[i] = copy._data[i];
-        //std:: cout << _data[i] <<std::endl;
     }
     this->_data = newData;
-    this->strategy = copy.strategy;
+    this->_strategy = copy._strategy;
     this->_capacity = copy._capacity;
     this->_size = copy._size;
 }
@@ -98,7 +103,7 @@ MyVector &MyVector::operator = (MyVector &copy){
     }
     delete[] this->_data;
     this->_data = newData;
-    this->strategy = copy.strategy;
+    this->_strategy = copy._strategy;
     this->_capacity = copy._capacity;
     this->_size = copy._size;
     return *this;
@@ -118,7 +123,10 @@ size_t MyVector::size() const {
 }
 
 float MyVector::loadFactor() {
-    return this->_size / this->_capacity;
+    if (this->_capacity == 0)
+        return 0;
+    else
+        return this->_size / this->_capacity;
 }
 
 ValueType &MyVector::operator[](const size_t i) const
@@ -253,19 +261,19 @@ long long int MyVector::find(const ValueType &value, bool isBegin) const
 {
     if (isBegin)
     {
-        for (int i = 0; i < this->_size; i++)
+        for (size_t i = 0; i < this->_size; i++)
         {
             if (this->_data[i] == value)
-                return _data[i];
+                return i;
         }
         return -1;
     }
     else
     {
-        for (int i = this->_size - 1; i > -1; i--)
+        for (size_t i = this->_size - 1; i > -1; i--)
         {
             if (this->_data[i] == value)
-                return _data[i];
+                return i;
         }
         return -1;
     }
@@ -293,10 +301,10 @@ void MyVector::reserve(const size_t capacity)
 void MyVector::resize(const size_t size, const ValueType value)
 {
     if (this->_size == size)
-        exit;
+        return;
     if (this->_size < size)
     {
-        ValueType* newData = new ValueType(size);
+        ValueType* newData = new ValueType[size];
         for (int i = 0; i < this->_size; i++)
         {
             newData[i] = this->_data[i];
@@ -305,16 +313,18 @@ void MyVector::resize(const size_t size, const ValueType value)
         {
             newData[i] = value;
         }
+        delete[] this->_data;
         this->_data = newData;
         this->_size = size;
     }
     if (this->_size > size)
     {
-        ValueType* newData = new ValueType(size);
+        ValueType* newData = new ValueType[size];
         for (int i = 0; i < size; i++)
         {
             newData[i] = this->_data[i];
         }
+        delete[] this->_data;
         this->_data = newData;
         this->_size = size;
         this->_capacity = size;
@@ -323,11 +333,9 @@ void MyVector::resize(const size_t size, const ValueType value)
 
 void MyVector::clear()
 {
-    for (int i = 0; i < this->_size; i++)
-    {
-        this->_data[i] = 0.0;
-    }
     this->_size = 0;
+    delete[] this->_data;
+    this->_data = new ValueType [this->_capacity];
 }
 
 MyVector::Iterator::~Iterator()
@@ -480,3 +488,4 @@ MyVector::MyVector(MyVector &&moveVec) noexcept
     moveVec._capacity = 0;
     moveVec._size = 0;
 }
+
