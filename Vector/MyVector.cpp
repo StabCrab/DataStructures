@@ -224,6 +224,7 @@ void MyVector::popBack()
     {
         newData[i] = this->_data[i];
     }
+    delete[] this->_data;
     this->_data = newData;
 }
 
@@ -238,6 +239,7 @@ void MyVector::erase(const size_t i)
     {
         newData[j - 1] = this->_data[j];
     }
+    delete[] this->_data;
     this->_data = newData;
     this->_size--;
 }
