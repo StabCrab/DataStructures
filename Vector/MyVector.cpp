@@ -227,6 +227,7 @@ void MyVector::erase(const size_t i)
     {
         newData[j - 1] = this->_data[j];
     }
+    delete[] this->_data;
     this->_data = newData;
     this->_size--;
 }
@@ -242,6 +243,7 @@ void MyVector::erase(const size_t i, const size_t len)
     {
         newData[j - len] = this->_data[j];
     }
+    delete[] this->_data;
     this->_data = newData;
     this->_size-= len;
 }
