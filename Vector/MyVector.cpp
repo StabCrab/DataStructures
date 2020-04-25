@@ -93,19 +93,21 @@ MyVector::MyVector(const MyVector &copy)
     this->_size = copy._size;
 }
 
-MyVector &MyVector::operator = (MyVector &copy){
+MyVector &MyVector::operator = (const MyVector &copy){
     if (this == &copy)
         return *this;
     ValueType* newData = new ValueType[copy._capacity];
     for (int i = 0; i < copy._size; i++)
     {
         newData[i] = copy._data[i];
+        std::cout << newData[i] << std::endl;
     }
     delete[] this->_data;
     this->_data = newData;
     this->_strategy = copy._strategy;
     this->_capacity = copy._capacity;
     this->_size = copy._size;
+    this->_coef = copy._coef;
     return *this;
 }
 
@@ -148,7 +150,7 @@ void MyVector::insert(const size_t i, const ValueType &value)
 {
     if (loadFactor() < 1)
     {
-        ValueType* newData = new ValueType(this->_capacity);
+        ValueType* newData = new ValueType[this->_capacity];
         for (int j = 0; j < i; j++)
         {
             newData[j] = this->_data[j];
@@ -164,7 +166,7 @@ void MyVector::insert(const size_t i, const ValueType &value)
     }
     else
     {
-        ValueType* newData = new ValueType(this->_capacity + 1);
+        ValueType* newData = new ValueType[this->_capacity + 1];
         for (int j = 0; j < i; j++)
         {
             newData[j] = this->_data[j];
@@ -184,7 +186,7 @@ void MyVector::insert(const size_t i, const MyVector &value)
 {
     if(this->_capacity - value._size >= 0)
     {
-        ValueType* newData = new ValueType(this->_capacity);
+        ValueType* newData = new ValueType[this->_capacity];
         for (int j = 0; j < i; j++)
         {
             newData[j] = this->_data[j];
@@ -234,14 +236,14 @@ void MyVector::popBack()
 
 void MyVector::erase(const size_t i)
 {
-    ValueType* newData = new ValueType(this->_capacity);
+    ValueType* newData = new ValueType[this->_capacity];
     for (int j = 0; j < i; j++)
     {
         newData[j] = this->_data[j];
     }
-    for (int j = i + 1; j < this->_size - 1; j++)
+    for (int j = i; j < this->_size - 1; j++)
     {
-        newData[j - 1] = this->_data[j];
+        newData[j] = this->_data[j + 1];
     }
     delete[] this->_data;
     this->_data = newData;
@@ -250,14 +252,14 @@ void MyVector::erase(const size_t i)
 
 void MyVector::erase(const size_t i, const size_t len)
 {
-    ValueType* newData = new ValueType(this->_capacity);
+    ValueType* newData = new ValueType[this->_capacity];
     for (int j = 0; j < i; j++)
     {
         newData[j] = this->_data[j];
     }
-    for (int j = i + len; j < this->_size - len; j++)
+    for (int j = i; j < this->_size - len; j++)
     {
-        newData[j - len] = this->_data[j];
+        newData[j] = this->_data[j+ len];
     }
     delete[] this->_data;
     this->_data = newData;
@@ -495,4 +497,3 @@ MyVector::MyVector(MyVector &&moveVec) noexcept
     moveVec._capacity = 0;
     moveVec._size = 0;
 }
-
