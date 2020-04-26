@@ -82,7 +82,7 @@ MyVector::MyVector(size_t size, ValueType value, ResizeStrategy resizeStrategy, 
 
 MyVector::MyVector(const MyVector &copy)
 {
-    ValueType* newData = new ValueType(copy._size);
+    ValueType* newData = new ValueType[copy._size];
     for (int i = 0; i < copy._size; i++)
     {
         newData[i] = copy._data[i];
@@ -185,7 +185,7 @@ void MyVector::insert(const size_t i, const ValueType &value)
 
 void MyVector::insert(const size_t i, const MyVector &value)
 {
-    if (this->_capacity - (this->_size + value._size) <= 0)
+    if (this->_capacity  >= this->_size + value._size)
     {
         ValueType* newData = new ValueType[this->_capacity];
         for (int j = 0; j < i; j++)
@@ -229,7 +229,7 @@ void MyVector::insert(const size_t i, const MyVector &value)
 void MyVector::popBack()
 {
     this->_size--;
-    ValueType* newData = new ValueType();
+    ValueType* newData = new ValueType[this->_capacity];
     for(int i = 0; i < this->_size; i++)
     {
         newData[i] = this->_data[i];
