@@ -179,12 +179,13 @@ void MyVector::insert(const size_t i, const ValueType &value)
         delete[] this->_data;
         this->_data = newData;
         this->_size++;
+        this->_capacity++;
     }
 }
 
 void MyVector::insert(const size_t i, const MyVector &value)
 {
-    if(this->_capacity - value._size >= 0)
+    if (this->_capacity - (this->_size + value._size) <= 0)
     {
         ValueType* newData = new ValueType[this->_capacity];
         for (int j = 0; j < i; j++)
@@ -201,10 +202,11 @@ void MyVector::insert(const size_t i, const MyVector &value)
         }
         delete[] this->_data;
         this->_data = newData;
+        this->_size += value._size;
     }
     else
     {
-        ValueType* newData = new ValueType(this->_size + value._size);
+        ValueType* newData = new ValueType[this->_size + value._size];
         for (int j = 0; j < i; j++)
         {
             newData[j] = this->_data[j];
@@ -218,6 +220,8 @@ void MyVector::insert(const size_t i, const MyVector &value)
             newData[j] = this->_data[j - value._size];
         }
         delete[] this->_data;
+        this->_capacity += value._size;
+        this->_size += value._size;
         this->_data = newData;
     }
 }
